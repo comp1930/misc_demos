@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>My BCIT Project</title>
+    <meta name="comp1930 boilerplate code" content="my bcit project">
+    <meta name="author" content="BCIT">
+
+    <!-- -------------------------------------------------------------------------- -->
+    <!-- Bootstrap for Mobile-first                                                 -->
+    <!-- -------------------------------------------------------------------------- -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <!-- -------------------------------------------------------------------------- -->
+    <!-- Add Firebase products that you want to use                                 -->
+    <!-- -------------------------------------------------------------------------- -->
+    <script src="https://www.gstatic.com/firebasejs/7.2.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.2.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.2.2/firebase-firestore.js"></script>
+    <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
+
+    <!------------------------------------------------------------------------------>
+    <!-- Optional styles and scripts of your own                                  -->
+    <!-- <link rel="stylesheet" href="styles/style.css"> -->
+    <!-- <script src="scripts/script.js"></script> -->
+    <!------------------------------------------------------------------------------>
+
+    <!------------------------------------------------------------------------------>
+    <!-- The following code connects your web app to your Firebase project        -->
+    <!------------------------------------------------------------------------------>
+    <script src="firebase_config_carly.js"> </script>
+</head>
+<body>
+    <h1> Hello CST!</h1>
+    <h1> Welcome to Carly's App</h1>
+    <h2> <span id="stuff"> stuff </span> </h2>
+    <br>
+
+    <!----------------------------------->
+    <!-- Create a form                 -->
+    <!----------------------------------->
+    <div>
+        <form id="myform">
+            Grade:
+            <input type="text" id="grade">
+            <br>
+            <input type="submit">
+        </form>
+    </div>
+    <br>
+    <div id="results">
+    </div>
+
+    <!----------------------------------------------->
+    <!--   All my own javascript stuff goes here   -->
+    <!----------------------------------------------->
+    <script>
+        //-----------------------------------------------------------------------------------
+        // This code listens for the submit button on form, grabs the text that user typed
+        // then writes this value (converted to int first) into firestore 
+        // as a new document in the assignments collection.
+        //-----------------------------------------------------------------------------------
+        function testWriteGrade() {
+            document.getElementById("myform").addEventListener("submit", function (e) {
+                e.preventDefault();
+                var grade = document.getElementById("grade").value; //get grade
+                //console.log(grade);
+                firebase.auth().onAuthStateChanged(function (user) {
+                    //console.log(user.uid);
+                    // write a new document of grade value
+                    db.collection("users").doc(user.uid).collection("gradebook")
+                        .doc("1510").collection("assignments")
+                        .add({
+                            value: parseInt(grade) //convert string to integer
+                        })
+                });
+            });
+        }
+        //testWriteGrade();
+
+        //----------------------------------------------------------------------
+        // This code reads from firestore, to get a "quote" message
+        //----------------------------------------------------------------------
+        function getQuote() {
+            db.collection('quotes').doc('123').onSnapshot(function (snap) {
+                //console.log("Current data is ...", snap.data());
+                document.getElementById("stuff").innerHTML = snap.data().message;
+                // another way is snap.data()["message"]
+            });
+        }
+        //getQuote();
+
+        //-----------------------------------------------------------------------
+        // This code writes to the database collection ("cities") of
+        // documents ("SF", "LA" etc) using the set() function.
+        //-----------------------------------------------------------------------
+        function createCities() {
+            //console.log("begin create cities");
+            var citiesRef = db.collection("cities").where("cities")
+            citiesRef.doc("YVR").set({
+                name: "Vancouver",
+                state: "BC",
+                country: "Canada",
+                capital: false,
+                population: 860000,
+                regions: ["west_coast", "eastern canada"]
+            });
+            citiesRef.doc("BBY").set({
+                name: "Burnaby",
+                state: null,
+                country: "Canada",
+                capital: true,
+                population: 9000000,
+                regions: ["east"]
+            });
+            citiesRef.doc("BJ").set({
+                name: "Beijing",
+                state: null,
+                country: "China",
+                capital: true,
+                population: 21500000,
+                regions: ["jingjinji", "hebei"]
+            });
+        };
+
+        // Function to display the cities by name only. 
+        // Create elements dynamically, attach a listener to each via "name" field
+        function displayCities() {
+            db.collection("cities") //add to this nesting if needed
+                .get() //get collection of documents
+                .then(function (snap) {
+                    snap.forEach(function (doc) { //iterate thru collection
+                        var n = doc.data().name;
+                        console.log(n); //should print out city
+                        var para = document.createElement("div");
+                        para.setAttribute("id", n); //id="Beijing"
+                        document.body.appendChild(para);
+                        var node = document.createTextNode(n); //name is from firestore
+                        para.appendChild(node);
+                        $("#" + n).click(function () { //attach listener to each city
+                            alert("in handler!" + n + " was clicked!");
+                        })
+
+                    });
+                });
+        }
+        //createCities();
+        //displayCities();
+
+        //-------------------------------------------------------------------------------------------------
+        // The createUser() functions creates a user collection, where the name and email are taken
+        // from the authenticated user object.  The updateUser() method updates the user collection
+        // with new information about the user.
+        //--------------------------------------------------------------------------------------------------
+        function createUser() {
+            // if the current user logged in user
+            // is authenticated, then grab "uid" "displayName" and "email"
+            // use "set()" with merge (if document did not exist it will be created)
+            firebase.auth().onAuthStateChanged(function (user) {
+                db.collection("users")
+                    .doc(user.uid)
+                    .set({
+                        "name": user.displayName,
+                        "email": user.email,
+                    }, {
+                        merge: true
+                    });
+            });
+        }
+        //createUser();
+
+        function updateUser() {
+            firebase.auth().onAuthStateChanged(function (user) {
+                db.collection("users").doc(user.uid).update({
+                    "haircolor": "blonde"
+                });
+            });
+        }
+        //updateUser();
+
+        //-----------------------------------------------------------------------------------------
+        // User Goal:  I want to see the list of cities that I have been to, and extra city information.
+        // The database has a collection of user documents.
+        // Each user document has an array of my cities (my history/posting/etc.)
+        //
+        // Steps:  First go to user's document and get a list of cities stored in an Array.
+        // Option1:  Display just the list of names, then add listeners, and handlers to display full version
+        // Option2:  Display the full details for each city right away.
+        //
+        // Option1 is implemented by showMyCitiesBrief();
+        // Option2 is implemtned by showMyCitiesLong() (which called showCity())
+        //------------------------------------------------------------------------------------------
+        function showMyCitiesBrief() {
+            firebase.auth().onAuthStateChanged(function (user) {
+                var docRef = db.collection("users").doc(user.uid);
+                docRef.get().then(function (doc) {
+                    if (doc.exists) {
+                        //console.log("Document data:", doc.data());
+                        //console.log("MyCities are ... " + doc.data().mycities);
+                        //---- Iterate through the array of cities for user
+                        var list = doc.data().mycities;
+                        list.forEach(function (x) {  //iterate thru array
+                            console.log(x); //should print out city
+                            var para = document.createElement("div");
+                            para.setAttribute("id", x); //id="Beijing"
+                            document.body.appendChild(para);
+                            var node = document.createTextNode(x); //name is from firestore
+                            para.appendChild(node);
+                            $("#" + x).click(function () { //attach listener to each city
+                                alert("in handler!" + x + " was clicked!");
+                            })
+                        });
+                        //----- End of Iteration through Array
+                    } else {
+                        console.log("No such document!");
+                    }
+                }).catch(function (error) {
+                    console.log("Error getting document:", error);
+                });
+            });
+        }
+        //showMyCitiesBrief();
+
+        //Get all the info about one city from Cities Collection
+        //This sub-function is called by showMyCitiesLong()
+        function showCity(x) {
+            console.log("inside getCityFull, and x is ..." + x);
+
+            //Display other stuff about city provided as input param
+            db.collection("cities").where("name", "==", x)
+                .get()
+                .then(function (snap) {
+                    snap.forEach(function (doc) {
+                        //console.log(doc.id, " => ", doc.data());
+                        var city = doc.data();
+
+                        //Display name of city
+                        var para = document.createElement("div");
+                        para.setAttribute("id", x); //id="Beijing"
+                        document.body.appendChild(para);
+                        var node = document.createTextNode(x); //name is from firestore
+                        para.appendChild(node);
+
+                        //List of other things about city
+                        var myList = document.createElement("ul");
+                        for (key in city) {
+                            console.log(city[key]);
+                            var listItem = document.createElement("li");
+                            var listValue = document.createTextNode(city[key]);
+                            listItem.appendChild(listValue);
+                            myList.appendChild(listItem);
+                        }
+                        document.body.appendChild(myList); // append list to container
+                    });
+                })
+                .catch(function (error) {
+                    console.log("Error getting documents: ", error);
+                });
+        }
+
+        //Cross reference to the cities collection to get everything about city
+        function showMyCitiesLong() {
+            firebase.auth().onAuthStateChanged(function (user) {
+                var docRef = db.collection("users").doc(user.uid);
+                docRef.get().then(function (doc) {
+                    if (doc.exists) {
+                        //---- Iterate through the list of cities for user
+                        var list = doc.data().mycities;
+                        list.forEach(function (x) { //iterate thru ARRAY
+                            console.log(x); //should print out city
+                            showCity(x);
+                        });
+                    } else {
+                        console.log("No such document!");
+                    }
+                }).catch(function (error) {
+                    console.log("Error getting document:", error);
+                });
+            });
+        }
+        showMyCitiesLong();
+
+    </script>
+</body>
+</html>
