@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <title>My BCIT Project</title>
@@ -35,6 +36,7 @@
     <!------------------------------------------------------------------------------>
     <script src="firebase_config_carly.js"> </script>
 </head>
+
 <body>
     <h1> Hello CST!</h1>
     <h1> Welcome to Carly's App</h1>
@@ -204,7 +206,7 @@
                         //console.log("MyCities are ... " + doc.data().mycities);
                         //---- Iterate through the array of cities for user
                         var list = doc.data().mycities;
-                        list.forEach(function (x) {  //iterate thru array
+                        list.forEach(function (x) { //iterate thru array
                             console.log(x); //should print out city
                             var para = document.createElement("div");
                             para.setAttribute("id", x); //id="Beijing"
@@ -283,8 +285,66 @@
                 });
             });
         }
-        showMyCitiesLong();
+        //showMyCitiesLong();
 
+        //------------------------------------------------------------------------
+        // From the BookWorm project
+        // The functions updateBooks() and addBooks() are examples of ways to
+        // populate the database of books.
+        //------------------------------------------------------------------------
+        function updateBooks() {
+            var dbRef = db.collection("books");
+            dbRef.doc("0").set({
+                title: "java",
+                author: "lewis"
+            });
+            dbRef.doc("1").set({
+                title: "web dev",
+                author: "scott"
+            });
+        }
+        function addBooks() {
+            var book3 = { title: "book3", author: "author3"};
+            var book4 = { title: "book4", author: "author4"};
+            var dbRef = db.collection("books");
+            dbRef.add(book3);
+            dbRef.add(book4);
+        }
+        //addBooks();         // call this one time to add books
+        updateBooks();
+
+        //input param b is one book document
+        function displayBook(b) {
+
+            var para = document.createElement("div");
+            document.body.appendChild(para);
+            var node = document.createTextNode("Book Info: "); //name is from firestore
+            para.appendChild(node);
+
+            //List of other things about city
+            var myList = document.createElement("ul");
+            for (key in b) {
+                var listItem = document.createElement("li");
+                var listValue = document.createTextNode(b[key]);
+                listItem.appendChild(listValue);
+                myList.appendChild(listItem);
+            }
+            document.body.appendChild(myList); // append list to container
+        }
+
+        function readBooks() {
+            var dbRef = db.collection("books");
+            dbRef.get().then(function (snap) {
+                console.log(snap);
+                snap.forEach(function (doc) {
+                    var book = doc.data();
+                    console.log(book);
+                    displayBook(book);
+                });
+            });
+        }
+        readBooks();
     </script>
 </body>
+
 </html>
