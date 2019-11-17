@@ -289,57 +289,76 @@
 
         //------------------------------------------------------------------------
         // From the BookWorm project
-        // The functions updateBooks() and addBooks() are examples of ways to
-        // populate the database of books.
+        // The functions updateBooks() and addBooks() are examples of different
+        // ways to populate the database collection of books.
         //------------------------------------------------------------------------
+        
+        // uses "set" function, user specifies ID
         function updateBooks() {
             var dbRef = db.collection("books");
-            dbRef.doc("0").set({
+            dbRef.doc("0").set({ //use set() if you know the ID 
                 title: "java",
                 author: "lewis"
             });
             dbRef.doc("1").set({
-                title: "web dev",
+                title: "web",
                 author: "scott"
             });
         }
+
+        //uses "add" function for auto generated document ID
         function addBooks() {
-            var book3 = { title: "book3", author: "author3"};
-            var book4 = { title: "book4", author: "author4"};
+            var book3 = {
+                title: "book3",
+                author: "author3"
+            };
+            var book4 = {
+                title: "book4",
+                author: "author4"
+            };
             var dbRef = db.collection("books");
             dbRef.add(book3);
             dbRef.add(book4);
         }
-        //addBooks();         // call this one time to add books
+        //When database collection documents are being added, 
+        //call this function to increment the document count.
+        function incBookCount(x) {
+            db.collection("stats").doc("books").set({
+                bookcount: firebase.firestore.FieldValue.increment(x)
+            });
+        }
+        addBooks(); // call this one time to add books
         updateBooks();
+        incBookCount(4);  //increment book count by 4
 
-        //input param b is one book document
-        function displayBook(b) {
-
+        //This function displays in DOM all the details contained in one (book) document
+        //input param is one book document
+        function displayBookDetails(book) {
+            //Create a Title element
             var para = document.createElement("div");
             document.body.appendChild(para);
             var node = document.createTextNode("Book Info: "); //name is from firestore
             para.appendChild(node);
 
-            //List of other things about city
+            //Create bullet point for each field
             var myList = document.createElement("ul");
-            for (key in b) {
+            for (key in book) {
                 var listItem = document.createElement("li");
-                var listValue = document.createTextNode(b[key]);
-                listItem.appendChild(listValue);
-                myList.appendChild(listItem);
+                var listValue = document.createTextNode(key + " is " + book[key]);
+                listItem.appendChild(listValue);  //append value to "li"
+                myList.appendChild(listItem);  //append "li" to "ul"
             }
             document.body.appendChild(myList); // append list to container
         }
 
+        //This function reads the books collection from database
         function readBooks() {
             var dbRef = db.collection("books");
             dbRef.get().then(function (snap) {
-                console.log(snap);
                 snap.forEach(function (doc) {
                     var book = doc.data();
                     console.log(book);
-                    displayBook(book);
+                    displayBookDetails(book);
                 });
             });
         }
