@@ -206,7 +206,7 @@
                         //console.log("MyCities are ... " + doc.data().mycities);
                         //---- Iterate through the array of cities for user
                         var list = doc.data().mycities;
-                        list.forEach(function (x) { //iterate thru array
+                        list.forEach(function (x) {                     //iterate thru array
                             console.log(x); //should print out city
                             var para = document.createElement("div");
                             para.setAttribute("id", x); //id="Beijing"
@@ -250,8 +250,8 @@
 
                         //List of other things about city
                         var myList = document.createElement("ul");
-                        for (key in city) {
-                            console.log(city[key]);
+                        for (key in city) {                     // iterate thru the "keys" in a JSON object
+                            console.log(city[key]);             // to access the "value" part of the pair
                             var listItem = document.createElement("li");
                             var listValue = document.createTextNode(city[key]);
                             listItem.appendChild(listValue);
