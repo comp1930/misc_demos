@@ -292,7 +292,7 @@
         // The functions updateBooks() and addBooks() are examples of different
         // ways to populate the database collection of books.
         //------------------------------------------------------------------------
-        
+
         // uses "set" function, user specifies ID
         function updateBooks() {
             var dbRef = db.collection("books");
@@ -327,9 +327,9 @@
                 bookcount: firebase.firestore.FieldValue.increment(x)
             });
         }
-        addBooks(); // call this one time to add books
-        updateBooks();
-        incBookCount(4);  //increment book count by 4
+        //addBooks(); // call this one time to add books
+        //updateBooks();
+        //incBookCount(4);  //increment book count by 4
 
         //This function displays in DOM all the details contained in one (book) document
         //input param is one book document
@@ -342,11 +342,11 @@
 
             //Create bullet point for each field
             var myList = document.createElement("ul");
-            for (key in book) {
+            for (key in book) { //iterate thru pairs (in document) with "key"
                 var listItem = document.createElement("li");
                 var listValue = document.createTextNode(key + " is " + book[key]);
-                listItem.appendChild(listValue);  //append value to "li"
-                myList.appendChild(listItem);  //append "li" to "ul"
+                listItem.appendChild(listValue); //append value to "li"
+                myList.appendChild(listItem); //append "li" to "ul"
             }
             document.body.appendChild(myList); // append list to container
         }
@@ -362,8 +362,134 @@
                 });
             });
         }
-        readBooks();
+        //readBooks();
+
+
+        //-----------------------------------------------------
+        // This function populates the database
+        //   "lockerinfo/NE/NE1"
+        // Lockerinfo is a collection of documents.
+        // Each document (NE, SW, etc.) has one key/value
+        // pair to represent vacant lockers.
+        // The "key" is the name of the building;
+        // The "value" is an ARRAY of integers representing vacant lockers
+        //-----------------------------------------------------
+        function populateVacantLockers() {
+            var NEObj = { //define all the buildings an list of vacant ones
+                NE3: [11, 22],
+                NE1: {
+                    0: 11,
+                    1: 22,
+                    2: 33
+                },
+                NE2: {
+                    0: 11,
+                    1: 22,
+                    2: 33
+                }
+            }
+            console.log("in populate vacant lockers" + NEObj);
+            db.collection("lockerinfo").doc("NE")
+                .set(NEObj)
+                .then(function () {
+                    console.log("Document successfully written!");
+                })
+                .catch(function (error) {
+                    console.error("Error writing document: ", error);
+                });
+        };
+        //populateVacantLockers();
+
+        function addRecentSearch(bldg) {
+
+            console.log("add recent search .." + bldg);
+            var obj = {
+                recentbuildings: firebase.firestore.FieldValue.arrayUnion(bldg) //add bldg to this array
+            }
+            console.log("add recent search .." + obj);
+
+            firebase.auth().onAuthStateChanged(function (user) {
+                console.log(user.uid);
+                db.collection("users").doc(user.uid).set(
+                    obj, {
+                        merge: true
+                    });
+            });
+        }
+        //addRecentSearch("SE2");
+        //addRecentSearch("SW3");
+
+        //-------------------------------------------------------------------
+        // This function shows a list of all the cities in the world (our database).
+        // For each city in this list, do the following:
+        //      - get the city name;
+        //      - get the city id;
+        //      - create an city name and display it in the "results" div
+        //      - attach a property to that div with the value of the city id
+        //      - attach a listener to that div, grabbing it by city id
+        //-------------------------------------------------------------------
+        function showCities() {
+            db.collection("cities").get()
+                .then(function (citiessnap) {
+                    citiessnap.forEach(function (city) {
+                        //console.log(city.data());
+                        var n = city.data().name;  // or city.data()["name"];
+                        var id = city.id; // get the id of this city
+                        var destination = document.getElementById("results");   //where I want to show results
+                        var para = document.createElement("div");               //create a div
+                        para.setAttribute("id", id); //id="BJ"
+                        destination.appendChild(para);
+                        var node = document.createTextNode(n); //name is from firestore
+                        para.appendChild(node);
+                        $("#" + id).click(function () { //attach listener to each city
+                            alert("in handler!" + n + " was clicked!");
+                            // increment the like field in the city's database
+                            // hint: increment field 
+
+                        })
+                    })
+                });
+        }
+        //showCities();
+
+        //--------------------------------------------------------------------------------------
+        // This function showGroupsForMe will go to a user's document, and find a field called "freeslots"
+        // to get two bits of information:  the day ,and the slot
+        // Using those two bits of the information, the findGroupsForMe function will go to 
+        // the global list of student groups, and find the ones where the
+        // day and slot match my free ones.
+        //--------------------------------------------------------------------------------------
+        function findGroupsForMe(day, slot) {
+            db.collection("studygroups")            //global collection of study groups
+                                                    //each group has a day and time
+                .where("day", "==", day).where("slot", "==", slot)
+                .get().then(function (snap) {
+                    snap.forEach(function (doc) {
+                        console.log(doc.data());  //document for the study group that works for me
+                    })
+                })
+        }
+        function showGroupsForMe() {
+            // find out when I'm free
+            // find out groups in that time
+            console.log("inside show groups for me ");
+            firebase.auth().onAuthStateChanged(function (user) {
+                console.log(user.uid);
+                db.collection("users").doc(user.uid).collection("freeslot")
+                    .get()
+                    .then(function (snap) {
+                        console.log(snap);   //collection of freeslots for me/user
+                        snap.forEach(function (doc) {      //for each of my free slots
+                            console.log(doc.data());
+                            var dayfree = doc.data().day;          // get day
+                            var slotfree = doc.data().slot;        // get time
+                            console.log(dayfree + slotfree);
+                            findGroupsForMe(dayfree, slotfree);    // find a group that fits me
+                        })
+                    })
+            })
+        }
+        showGroupsForMe();
     </script>
 </body>
-
 </html>
