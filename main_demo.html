@@ -103,7 +103,7 @@
         //-----------------------------------------------------------------------
         function createCities() {
             //console.log("begin create cities");
-            var citiesRef = db.collection("cities").where("cities")
+            var citiesRef = db.collection("cities");
             citiesRef.doc("YVR").set({
                 name: "Vancouver",
                 state: "BC",
@@ -117,7 +117,7 @@
                 state: null,
                 country: "Canada",
                 capital: true,
-                population: 9000000,
+                population: 100000,
                 regions: ["east"]
             });
             citiesRef.doc("BJ").set({
@@ -325,7 +325,7 @@
         function incBookCount(x) {
             db.collection("stats").doc("books").set({
                 bookcount: firebase.firestore.FieldValue.increment(x)
-            });
+            }, {merge:true});
         }
         //addBooks(); // call this one time to add books
         //updateBooks();
@@ -420,11 +420,11 @@
         //addRecentSearch("SW3");
 
         //-------------------------------------------------------------------
-        // This function shows a list of all the cities in the world (our database).
+        // This function shows a list of all the cities in the world (ie our database).
         // For each city in this list, do the following:
         //      - get the city name;
         //      - get the city id;
-        //      - create an city name and display it in the "results" div
+        //      - create a city name string and display it in the "results" div
         //      - attach a property to that div with the value of the city id
         //      - attach a listener to that div, grabbing it by city id
         //-------------------------------------------------------------------
@@ -443,14 +443,22 @@
                         para.appendChild(node);
                         $("#" + id).click(function () { //attach listener to each city
                             alert("in handler!" + n + " was clicked!");
+                            incLikeCount(id);    //add one to the like counter for city whose doc is "id"
                             // increment the like field in the city's database
-                            // hint: increment field 
+                            // hint: use FieldValue 
 
                         })
                     })
                 });
         }
-        //showCities();
+        function incLikeCount(cityID) {
+            console.log("inside incLikeCount..." + cityID);
+            db.collection("cities").doc(cityID).set({
+                likes: firebase.firestore.FieldValue.increment(1)     //by one
+            }, {merge:true});
+        }
+        createCities();
+        showCities();
 
         //--------------------------------------------------------------------------------------
         // This function showGroupsForMe will go to a user's document, and find a field called "freeslots"
@@ -489,7 +497,7 @@
                     })
             })
         }
-        showGroupsForMe();
+        //showGroupsForMe();
     </script>
 </body>
 </html>
