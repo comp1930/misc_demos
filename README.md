@@ -1,4 +1,4 @@
-# Project "misc_demos"
+
 # Misc Lecture Demos
 
 ### @author  Carly Orr
